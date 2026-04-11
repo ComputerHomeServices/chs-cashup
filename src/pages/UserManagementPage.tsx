@@ -44,7 +44,7 @@ export const UserManagementPage = () => {
     e.preventDefault();
     setSaving(true);
     try {
-      const { error } = await supabase.functions.invoke('admin-reset-password', {
+      const { data, error } = await supabase.functions.invoke('admin-reset-password', {
         body: { 
           action: 'create-user',
           ...newUser
@@ -52,6 +52,7 @@ export const UserManagementPage = () => {
       });
 
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
       alert("New Auditor Successfully Onboarded!");
       setShowAddModal(false);
