@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #3b82f6;
+  --color-primary-dark: #1d4ed8;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+:root {
+  --bg-main: #030712;
+  --bg-glass: rgba(255, 255, 255, 0.03);
+  --border-glass: rgba(255, 255, 255, 0.08);
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --input-bg: rgba(0, 0, 0, 0.3);
+}
+
+.light {
+  --bg-main: #f8fafc;
+  --bg-glass: rgba(0, 0, 0, 0.03);
+  --border-glass: rgba(0, 0, 0, 0.08);
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --input-bg: rgba(255, 255, 255, 0.7);
+}
+
+@layer base {
+  body {
+    @apply antialiased transition-colors duration-300;
+    background-color: var(--bg-main);
+    color: var(--text-main);
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply backdrop-blur-2xl transition-all duration-300;
+    background-color: var(--bg-glass);
+    border: 1px solid var(--border-glass);
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-800 rounded-full hover:bg-slate-700 transition-colors;
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Mobile responsive fixes */
+@media (max-width: 768px) {
+  .mx-auto {
+    @apply px-4;
+  }
+}
