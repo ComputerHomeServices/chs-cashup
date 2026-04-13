@@ -8,10 +8,11 @@ import { Sparkles, Printer, CheckCircle2 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
+import { cn } from '../lib/utils';
 
 export const NewCashupPage = () => {
   const { user } = useAuth();
-  const { createCashup } = useCashups();
+  const { cashups, createCashup } = useCashups();
   const navigate = useNavigate();
 
   const [storeName, setStoreName] = useState('CHS Main');
@@ -22,6 +23,18 @@ export const NewCashupPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [lastSavedId, setLastSavedId] = useState<string | null>(null);
+  const [openingCash, setOpeningCash] = useState(0);
+  const [payoutAmount, setPayoutAmount] = useState(0);
+  const [payoutReason, setPayoutReason] = useState('');
+  const [totalExpected, setTotalExpected] = useState(0);
+
+  // Fetch last cashup to get opening balance
+  useMemo(() => {
+    const lastCashup = cashups[0];
+    if (lastCashup) {
+      setOpeningCash(lastCashup.cash_total);
+    }
+  }, [cashups]);
 
   const [denominations, setDenominations] = useState({
     notes_200: 0,
@@ -53,7 +66,8 @@ export const NewCashupPage = () => {
     );
   }, [denominations]);
 
-  const totalActual = cashTotal + cardTotal + eftTotal;
+  const totalActual = cashTotal + cardTotal + eftTotal + payoutAmount;
+  const variance = totalActual - totalExpected;
 
   const generatePDF = (id: string) => {
     try {
@@ -90,12 +104,16 @@ export const NewCashupPage = () => {
         ['50c Coins', denominations.coins_050, `R ${(denominations.coins_050 * 0.5).toFixed(2)}`],
         ['20c Coins', denominations.coins_020, `R ${(denominations.coins_020 * 0.2).toFixed(2)}`],
         ['10c Coins', denominations.coins_010, `R ${(denominations.coins_010 * 0.1).toFixed(2)}`],
-        ['', 'TOTAL ASSETS', `R ${totalActual.toFixed(2)}`]
+        ['Opening Cash', '', `R ${openingCash.toFixed(2)}`],
+        ['Payout Amount', payoutReason || 'Payout', `R ${payoutAmount.toFixed(2)}`],
+        ['Total Assets', '', `R ${totalActual.toFixed(2)}`],
+        ['Total Expected', '', `R ${totalExpected.toFixed(2)}`],
+        ['Variance', '', `R ${variance.toFixed(2)}`]
       ];
 
       autoTable(doc, {
         startY: (doc as any).lastAutoTable.finalY + 10,
-        head: [['Denomination', 'Quantity', 'Amount']],
+        head: [['Denomination/Category', 'Detail', 'Amount']],
         body: rows,
         theme: 'grid',
         headStyles: { fillColor: [15, 23, 42] }
@@ -120,9 +138,12 @@ export const NewCashupPage = () => {
         cash_total: cashTotal,
         card_total: cardTotal,
         eft_total: eftTotal,
-        total_expected: 0,
+        opening_cash: openingCash,
+        payout_amount: payoutAmount,
+        payout_reason: payoutReason,
+        total_expected: totalExpected,
         total_actual: totalActual,
-        variance: 0,
+        variance: variance,
         notes,
         status: 'processed'
       });
@@ -180,11 +201,38 @@ export const NewCashupPage = () => {
         </div>
 
         <div className="lg:col-span-4 space-y-6">
-           <section className="bg-white p-8 rounded-2xl border border-slate-200 shadow-md space-y-6">
+            <section className="bg-white p-8 rounded-2xl border border-slate-200 shadow-md space-y-6">
               <h2 className="text-sm font-black uppercase text-slate-400 border_b pb-4">Settlements</h2>
               <div className="space-y-4">
+                 <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Opening Cash</label>
+                    <div className="flex items-stretch bg-slate-50 border-2 border-slate-100 rounded-xl overflow-hidden opacity-60">
+                       <div className="bg-slate-100 px-4 flex items-center justify-center font-black text-slate-400 italic">R</div>
+                       <input readOnly value={openingCash.toFixed(2)} className="flex-1 px-4 py-3 bg-transparent text-xl font-black outline-none" />
+                    </div>
+                 </div>
                  <SettlementInput label="Card Total" value={cardTotal} onChange={setCardTotal} />
                  <SettlementInput label="EFT Total" value={eftTotal} onChange={setEftTotal} />
+                 <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                       <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Payout Reason</label>
+                       <input 
+                         className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:border-primary"
+                         value={payoutReason} onChange={(e) => setPayoutReason(e.target.value)}
+                         placeholder="e.g. Bread"
+                       />
+                    </div>
+                    <div className="space-y-1">
+                       <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Payout Amount</label>
+                       <input 
+                         type="number" step="0.01"
+                         className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:border-primary"
+                         value={payoutAmount || ''} onChange={(e) => setPayoutAmount(parseFloat(e.target.value) || 0)}
+                         placeholder="0.00"
+                       />
+                    </div>
+                 </div>
+                 <SettlementInput label="System Expected Total" value={totalExpected} onChange={setTotalExpected} />
               </div>
               <div className="pt-6 border_t border-slate-100 space-y-4">
                  <div className="space-y-1">
@@ -195,9 +243,16 @@ export const NewCashupPage = () => {
                       rows={3} placeholder="Optional notes..."
                     />
                  </div>
-                 <SummaryCard label="Grand Total" value={totalActual} variant="success" icon={<Sparkles size={16} />} />
+                 <SummaryCard label="Actual Asset Total" value={totalActual} variant={variance === 0 ? "success" : "danger"} icon={<Sparkles size={16} />} />
+                 <div className={cn(
+                    "p-4 rounded-xl flex justify-between items-center font-black uppercase italic text-sm",
+                    variance === 0 ? "bg-emerald-500/10 text-emerald-600" : "bg-rose-500/10 text-rose-600"
+                 )}>
+                    <span>Variance</span>
+                    <span>R {variance.toFixed(2)}</span>
+                 </div>
               </div>
-           </section>
+            </section>
         </div>
       </form>
 

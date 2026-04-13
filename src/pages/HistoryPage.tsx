@@ -68,17 +68,21 @@ export const HistoryPage = () => {
       });
 
       const totalRows = [
-        ['Total Cash', `R ${c.cash_total.toFixed(2)}`],
+        ['Opening Cash', `R ${c.opening_cash.toFixed(2)}`],
+        ['Total Cash Counted', `R ${c.cash_total.toFixed(2)}`],
         ['Total Cards', `R ${c.card_total.toFixed(2)}`],
         ['Total EFT', `R ${c.eft_total.toFixed(2)}`],
-        ['GRAND TOTAL', `R ${c.total_actual.toFixed(2)}`]
+        ['Payouts', `R ${c.payout_amount.toFixed(2)} (${c.payout_reason || 'None'})`],
+        ['ACTUAL ASSET TOTAL', `R ${c.total_actual.toFixed(2)}`],
+        ['SYSTEM EXPECTED', `R ${c.total_expected.toFixed(2)}`],
+        ['VARIANCE', `R ${c.variance.toFixed(2)}`]
       ];
 
       autoTable(doc, {
         startY: (doc as any).lastAutoTable.finalY + 10,
         body: totalRows,
         theme: 'plain',
-        styles: { fontSize: 12, fontStyle: 'bold', halign: 'right' },
+        styles: { fontSize: 10, fontStyle: 'bold', halign: 'right' },
         columnStyles: { 0: { cellWidth: 150 }, 1: { cellWidth: 40 } }
       });
 
@@ -204,7 +208,15 @@ export const HistoryPage = () => {
                 </div>
                 <div className="space-y-3 font-black text-slate-900">
                   <div className="flex justify-between font-bold text-slate-400 uppercase text-[10px]">Financials</div>
-                  <DetailRow label="Grand Total" value={`R ${selectedCashup.total_actual.toLocaleString()}`} />
+                  <DetailRow label="Opening Cash" value={`R ${selectedCashup.opening_cash.toLocaleString()}`} />
+                  <DetailRow label="Cash Counted" value={`R ${selectedCashup.cash_total.toLocaleString()}`} />
+                  <DetailRow label="Payout" value={`R ${selectedCashup.payout_amount.toLocaleString()}`} />
+                  <DetailRow label="Expected" value={`R ${selectedCashup.total_expected.toLocaleString()}`} />
+                  <div className="h-px bg-slate-100 my-2"></div>
+                  <DetailRow label="Actual Total" value={`R ${selectedCashup.total_actual.toLocaleString()}`} />
+                  <div className={`text-right text-[10px] font-black italic ${selectedCashup.variance === 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                    VARIANCE: R {selectedCashup.variance.toFixed(2)}
+                  </div>
                 </div>
               </div>
 

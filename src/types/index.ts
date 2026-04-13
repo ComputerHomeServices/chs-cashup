@@ -24,6 +24,9 @@ export interface Cashup {
   cash_total: number;
   card_total: number;
   eft_total: number;
+  opening_cash: number;
+  payout_amount: number;
+  payout_reason?: string;
   total_expected: number;
   total_actual: number;
   variance: number;
