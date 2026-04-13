@@ -67,7 +67,8 @@ export const NewCashupPage = () => {
   }, [denominations]);
 
   const totalActual = cashTotal + cardTotal + eftTotal + payoutAmount;
-  const variance = totalActual - totalExpected;
+  const cashDailyIntake = cashTotal + payoutAmount - openingCash;
+  const variance = cashDailyIntake - totalExpected;
 
   const generatePDF = (id: string) => {
     try {
@@ -107,8 +108,8 @@ export const NewCashupPage = () => {
         ['Opening Cash', '', `R ${openingCash.toFixed(2)}`],
         ['Payout Amount', payoutReason || 'Payout', `R ${payoutAmount.toFixed(2)}`],
         ['Total Assets', '', `R ${totalActual.toFixed(2)}`],
-        ['Total Expected', '', `R ${totalExpected.toFixed(2)}`],
-        ['Variance', '', `R ${variance.toFixed(2)}`]
+        ['Expected Cash Sales', '', `R ${totalExpected.toFixed(2)}`],
+        ['Cash Variance', '', `R ${variance.toFixed(2)}`]
       ];
 
       autoTable(doc, {
@@ -232,7 +233,7 @@ export const NewCashupPage = () => {
                        />
                     </div>
                  </div>
-                 <SettlementInput label="System Expected Total" value={totalExpected} onChange={setTotalExpected} />
+                 <SettlementInput label="Expected Cash Sales" value={totalExpected} onChange={setTotalExpected} />
               </div>
               <div className="pt-6 border_t border-slate-100 space-y-4">
                  <div className="space-y-1">
@@ -243,12 +244,12 @@ export const NewCashupPage = () => {
                       rows={3} placeholder="Optional notes..."
                     />
                  </div>
-                 <SummaryCard label="Actual Asset Total" value={totalActual} variant={variance === 0 ? "success" : "danger"} icon={<Sparkles size={16} />} />
+                 <SummaryCard label="Actual Asset Total" value={totalActual} variant="default" icon={<Sparkles size={16} />} />
                  <div className={cn(
                     "p-4 rounded-xl flex justify-between items-center font-black uppercase italic text-sm",
                     variance === 0 ? "bg-emerald-500/10 text-emerald-600" : "bg-rose-500/10 text-rose-600"
                  )}>
-                    <span>Variance</span>
+                    <span>Cash Variance</span>
                     <span>R {variance.toFixed(2)}</span>
                  </div>
               </div>
