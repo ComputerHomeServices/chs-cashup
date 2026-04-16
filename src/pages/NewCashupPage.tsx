@@ -9,6 +9,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
 import { cn } from '../lib/utils';
+import { InvoiceList } from '../components/InvoiceList';
 
 export const NewCashupPage = () => {
   const { user } = useAuth();
@@ -27,6 +28,10 @@ export const NewCashupPage = () => {
   const [payoutAmount, setPayoutAmount] = useState(0);
   const [payoutReason, setPayoutReason] = useState('');
   const [totalExpected, setTotalExpected] = useState(0);
+  
+  const [cashInvoices, setCashInvoices] = useState<number[]>([]);
+  const [cardInvoices, setCardInvoices] = useState<number[]>([]);
+  const [eftInvoices, setEftInvoices] = useState<number[]>([]);
 
   // Fetch last cashup to get opening balance
   useMemo(() => {
@@ -66,8 +71,17 @@ export const NewCashupPage = () => {
     );
   }, [denominations]);
 
-  const totalActual = cashTotal + cardTotal + eftTotal + payoutAmount;
-  const cashDailyIntake = cashTotal + payoutAmount - openingCash;
+  const sum = (arr: number[]) => arr.reduce((a, b) => a + b, 0);
+  const cashInvoicesTotal = useMemo(() => sum(cashInvoices), [cashInvoices]);
+  const cardInvoicesTotal = useMemo(() => sum(cardInvoices), [cardInvoices]);
+  const eftInvoicesTotal = useMemo(() => sum(eftInvoices), [eftInvoices]);
+
+  const netCash = (cashTotal + cashInvoicesTotal) - payoutAmount;
+  const netCard = cardTotal + cardInvoicesTotal;
+  const netEFT = eftTotal + eftInvoicesTotal;
+
+  const totalActual = netCash + netCard + netEFT;
+  const cashDailyIntake = netCash - openingCash;
   const variance = cashDailyIntake - totalExpected;
 
   const generatePDF = (id: string) => {
@@ -106,7 +120,10 @@ export const NewCashupPage = () => {
         ['20c Coins', denominations.coins_020, `R ${(denominations.coins_020 * 0.2).toFixed(2)}`],
         ['10c Coins', denominations.coins_010, `R ${(denominations.coins_010 * 0.1).toFixed(2)}`],
         ['Opening Cash', '', `R ${openingCash.toFixed(2)}`],
-        ['Payout Amount', payoutReason || 'Payout', `R ${payoutAmount.toFixed(2)}`],
+        ['Payout Amount', payoutReason || 'Payout', `R -${payoutAmount.toFixed(2)}`],
+        ['Cash Invoices', '', `R ${cashInvoicesTotal.toFixed(2)}`],
+        ['Card Invoices', '', `R ${cardInvoicesTotal.toFixed(2)}`],
+        ['EFT Invoices', '', `R ${eftInvoicesTotal.toFixed(2)}`],
         ['Total Assets', '', `R ${totalActual.toFixed(2)}`],
         ['Expected Cash Sales', '', `R ${totalExpected.toFixed(2)}`],
         ['Cash Variance', '', `R ${variance.toFixed(2)}`]
@@ -145,6 +162,9 @@ export const NewCashupPage = () => {
         total_expected: totalExpected,
         total_actual: totalActual,
         variance: variance,
+        cash_invoices: cashInvoices,
+        card_invoices: cardInvoices,
+        eft_invoices: eftInvoices,
         notes,
         status: 'processed'
       });
@@ -199,6 +219,11 @@ export const NewCashupPage = () => {
                  <DenominationInput label="10c" value={denominations.coins_010} multiplier={0.1} type="coin" onChange={(v) => setDenominations(p => ({...p, coins_010: v}))} />
               </div>
            </section>
+
+           <section className="bg-white p-6 rounded-2xl border border-slate-200 space-y-4">
+              <h2 className="text-sm font-black uppercase text-slate-400 border_b pb-4">Cash Invoices</h2>
+              <InvoiceList label="Cash" invoices={cashInvoices} onChange={setCashInvoices} />
+            </section>
         </div>
 
         <div className="lg:col-span-4 space-y-6">
@@ -213,7 +238,13 @@ export const NewCashupPage = () => {
                     </div>
                  </div>
                  <SettlementInput label="Card Total" value={cardTotal} onChange={setCardTotal} />
+                 <InvoiceList label="Card" invoices={cardInvoices} onChange={setCardInvoices} />
+                 <div className="h-px bg-slate-100 my-2"></div>
+                 
                  <SettlementInput label="EFT Total" value={eftTotal} onChange={setEftTotal} />
+                 <InvoiceList label="EFT" invoices={eftInvoices} onChange={setEftInvoices} />
+                 <div className="h-px bg-slate-100 my-2"></div>
+
                  <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
                        <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Payout Reason</label>
@@ -224,10 +255,10 @@ export const NewCashupPage = () => {
                        />
                     </div>
                     <div className="space-y-1">
-                       <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Payout Amount</label>
+                       <label className="text-[10px] font-black uppercase text-rose-400 ml-1">Payout (DEDUCT)</label>
                        <input 
                          type="number" step="0.01"
-                         className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:border-primary"
+                         className="w-full bg-rose-50 border border-rose-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:border-rose-500"
                          value={payoutAmount || ''} onChange={(e) => setPayoutAmount(parseFloat(e.target.value) || 0)}
                          placeholder="0.00"
                        />

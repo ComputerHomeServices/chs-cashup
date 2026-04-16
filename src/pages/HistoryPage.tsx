@@ -67,12 +67,20 @@ export const HistoryPage = () => {
         styles: { fontSize: 9 }
       });
 
+      const sumInvoices = (arr: any) => (Array.isArray(arr) ? arr : []).reduce((a: number, b: number) => a + b, 0);
+      const cashInvTotal = sumInvoices(c.cash_invoices);
+      const cardInvTotal = sumInvoices(c.card_invoices);
+      const eftInvTotal = sumInvoices(c.eft_invoices);
+
       const totalRows = [
         ['Opening Cash', `R ${c.opening_cash.toFixed(2)}`],
         ['Total Cash Counted', `R ${c.cash_total.toFixed(2)}`],
+        ['Cash Invoices', `R ${cashInvTotal.toFixed(2)}`],
+        ['Payouts', `R -${c.payout_amount.toFixed(2)} (${c.payout_reason || 'None'})`],
         ['Total Cards', `R ${c.card_total.toFixed(2)}`],
+        ['Card Invoices', `R ${cardInvTotal.toFixed(2)}`],
         ['Total EFT', `R ${c.eft_total.toFixed(2)}`],
-        ['Payouts', `R ${c.payout_amount.toFixed(2)} (${c.payout_reason || 'None'})`],
+        ['EFT Invoices', `R ${eftInvTotal.toFixed(2)}`],
         ['ACTUAL ASSET TOTAL', `R ${c.total_actual.toFixed(2)}`],
         ['SYSTEM EXPECTED', `R ${c.total_expected.toFixed(2)}`],
         ['VARIANCE', `R ${c.variance.toFixed(2)}`]
@@ -210,7 +218,12 @@ export const HistoryPage = () => {
                   <div className="flex justify-between font-bold text-slate-400 uppercase text-[10px]">Financials</div>
                   <DetailRow label="Opening Cash" value={`R ${selectedCashup.opening_cash.toLocaleString()}`} />
                   <DetailRow label="Cash Counted" value={`R ${selectedCashup.cash_total.toLocaleString()}`} />
-                  <DetailRow label="Payout" value={`R ${selectedCashup.payout_amount.toLocaleString()}`} />
+                  <DetailRow label="Cash Invoices" value={`R ${(selectedCashup.cash_invoices || []).reduce((a, b) => a + b, 0).toLocaleString()}`} />
+                  <DetailRow label="Payout" value={`R -${selectedCashup.payout_amount.toLocaleString()}`} />
+                  <DetailRow label="Card Total" value={`R ${selectedCashup.card_total.toLocaleString()}`} />
+                  <DetailRow label="Card Invoices" value={`R ${(selectedCashup.card_invoices || []).reduce((a, b) => a + b, 0).toLocaleString()}`} />
+                  <DetailRow label="EFT Total" value={`R ${selectedCashup.eft_total.toLocaleString()}`} />
+                  <DetailRow label="EFT Invoices" value={`R ${(selectedCashup.eft_invoices || []).reduce((a, b) => a + b, 0).toLocaleString()}`} />
                   <DetailRow label="Expected" value={`R ${selectedCashup.total_expected.toLocaleString()}`} />
                   <div className="h-px bg-slate-100 my-2"></div>
                   <DetailRow label="Actual Total" value={`R ${selectedCashup.total_actual.toLocaleString()}`} />

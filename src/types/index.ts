@@ -34,6 +34,10 @@ export interface Cashup {
   notes?: string;
   auditor_name?: string;
   status: CashupStatus;
+  
+  cash_invoices: number[];
+  card_invoices: number[];
+  eft_invoices: number[];
 }
 
 export interface UserProfile {
